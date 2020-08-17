@@ -1,0 +1,57 @@
+diff --git a/util.c b/util.c
+index fbbfd8ba..235afa82 100644
+--- a/util.c
++++ b/util.c
+@@ -342,6 +342,7 @@ int copy_file(const char *source, const char *dest, int ofd, mode_t mode)
+ 		if (robust_unlink(dest) && errno != ENOENT) {
+ 			int save_errno = errno;
+ 			rsyserr(FERROR_XFER, errno, "unlink %s", full_fname(dest));
++			close(ifd);
+ 			errno = save_errno;
+ 			return -1;
+ 		}
+diff --git a/lib/pool_alloc.c b/lib/pool_alloc.c
+index 5856d591..a70a3f1a 100644
+--- a/lib/pool_alloc.c
++++ b/lib/pool_alloc.c
+@@ -49,15 +49,15 @@ pool_create(size_t size, size_t quantum, void (*bomb)(const char *), int flags)
+ {
+ 	struct alloc_pool *pool;
+ 
+-	if (!(pool = new0(struct alloc_pool)))
+-		return NULL;
+-
+ 	if ((MINALIGN & (MINALIGN - 1)) != 0) {
+ 		if (bomb)
+ 			(*bomb)("Compiler error: MINALIGN is not a power of 2\n");
+ 		return NULL;
+ 	}
+ 
++	if (!(pool = new0(struct alloc_pool)))
++		return NULL;
++
+ 	if (!size)
+ 		size = POOL_DEF_EXTENT;
+ 	if (!quantum)
+diff --git a/batch.c b/batch.c
+index 21c632fc..1ab66e90 100644
+--- a/batch.c
++++ b/batch.c
+@@ -216,7 +216,7 @@ static void write_filter_rules(int fd)
+ void write_batch_shell_file(int argc, char *argv[], int file_arg_cnt)
+ {
+ 	int fd, i, len, err = 0;
+-	char *p, filename[MAXPATHLEN];
++	char *p, *p2, filename[MAXPATHLEN];
+ 
+ 	stringjoin(filename, sizeof filename,
+ 		   batch_name, ".sh", NULL);
+@@ -267,7 +267,7 @@ void write_batch_shell_file(int argc, char *argv[], int file_arg_cnt)
+ 				err = 1;
+ 		}
+ 	}
+-	if (!(p = check_for_hostspec(argv[argc - 1], &p, &i)))
++	if (!(p = check_for_hostspec(argv[argc - 1], &p2, &i)))
+ 		p = argv[argc - 1];
+ 	if (write(fd, " ${1:-", 6) != 6
+ 	 || write_arg(fd, p) < 0)
