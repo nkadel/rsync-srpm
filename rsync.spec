@@ -22,6 +22,7 @@ Source5: rsyncd.sysconfig
 Source6: rsyncd@.service
 
 BuildRequires: autoconf
+BuildRequires: gcc-c++
 BuildRequires: libacl-devel
 BuildRequires: libattr-devel
 BuildRequires: libzstd-devel
