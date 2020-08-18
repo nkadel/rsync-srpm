@@ -8,8 +8,8 @@
 
 Summary: A program for synchronizing files over a network
 Name: rsync
-Version: 3.1.3
-Release: 7%{?dist}
+Version: 3.2.3
+Release: 0%{?dist}
 Group: Applications/Internet
 URL: http://rsync.samba.org/
 
@@ -21,16 +21,24 @@ Source4: rsyncd.conf
 Source5: rsyncd.sysconfig
 Source6: rsyncd@.service
 
-BuildRequires: libacl-devel, libattr-devel, autoconf, popt-devel, systemd
+BuildRequires: autoconf
+BuildRequires: libacl-devel
+BuildRequires: libattr-devel
+BuildRequires: libzstd-devel
+BuildRequires: lz4-devel
+BuildRequires: openssl-devel
+BuildRequires: popt-devel
+BuildRequires: systemd
+BuildRequires: xxhash-devel
 #Requires: zlib
 #Added virtual provide for zlib due to https://fedoraproject.org/wiki/Bundled_Libraries?rd=Packaging:Bundled_Libraries
 Provides: bundled(zlib) = 1.2.8
 License: GPLv3+
 
-Patch0: rsync-man.patch
-Patch1: rsync-3.0.6-iconv-logging.patch
-Patch2: rsync-3.1.3-covscan.patch
-Patch3: rsync-3.1.2-remove-symlinks.patch
+#Patch0: rsync-man.patch
+#Patch1: rsync-3.0.6-iconv-logging.patch
+#Patch2: rsync-3.1.3-covscan.patch
+#Patch3: rsync-3.1.2-remove-symlinks.patch
 
 %description
 Rsync uses a reliable algorithm to bring remote and host files into
@@ -62,16 +70,16 @@ package provides the anonymous rsync service.
 %endif
 
 #Needed for compatibility with previous patched rsync versions
-patch -p1 -i patches/acls.diff
-patch -p1 -i patches/xattrs.diff
+#patch -p1 -i patches/acls.diff
+#patch -p1 -i patches/xattrs.diff
 
 #Enable --copy-devices parameter
 patch -p1 -i patches/copy-devices.diff
 
-%patch0 -p1 -b .man
-%patch1 -p1 -b .iconv
-%patch2 -p1 -b .covscan
-%patch3 -p1 -b .symlinks
+#%patch0 -p1 -b .man
+#%patch1 -p1 -b .iconv
+#%patch2 -p1 -b .covscan
+#%patch3 -p1 -b .symlinks
 
 %build
 
@@ -97,8 +105,10 @@ chmod -x support/*
 %files
 %{!?_licensedir:%global license %%doc}
 %license COPYING
-%doc NEWS OLDNEWS README support/ tech_report.tex
+%doc NEWS.md README.md TODO support/ tech_report.tex
 %{_bindir}/%{name}
+%{_bindir}/%{name}-ssl
+%{_mandir}/man1/%{name}-ssl.1*
 %{_mandir}/man1/%{name}.1*
 
 %files daemon

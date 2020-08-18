@@ -14,7 +14,7 @@ RSYNCSAFEOPTS=$(RSYNCOPTS) --ignore-existing
 #MOCKS+=fedora-32-x86_64
 MOCKS+=epel-8-x86_64
 MOCKS+=epel-7-x86_64
-MOCKS+=epel-6-x86_64
+#MOCKS+=epel-6-x86_64
 
 #REPOBASEDIR=/var/www/linux/gitrepo
 REPOBASEDIR:=`/bin/pwd`/../gitrepo
