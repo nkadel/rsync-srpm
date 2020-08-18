@@ -35,11 +35,6 @@ BuildRequires: xxhash-devel
 Provides: bundled(zlib) = 1.2.8
 License: GPLv3+
 
-#Patch0: rsync-man.patch
-#Patch1: rsync-3.0.6-iconv-logging.patch
-#Patch2: rsync-3.1.3-covscan.patch
-#Patch3: rsync-3.1.2-remove-symlinks.patch
-
 %description
 Rsync uses a reliable algorithm to bring remote and host files into
 sync very quickly. Rsync is fast because it just sends the differences
@@ -75,11 +70,6 @@ package provides the anonymous rsync service.
 
 #Enable --copy-devices parameter
 patch -p1 -i patches/copy-devices.diff
-
-#%patch0 -p1 -b .man
-#%patch1 -p1 -b .iconv
-#%patch2 -p1 -b .covscan
-#%patch3 -p1 -b .symlinks
 
 %build
 
