@@ -11,9 +11,10 @@ RSYNCOPTS=-a --no-owner --no-group
 RSYNCSAFEOPTS=$(RSYNCOPTS) --ignore-existing 
 
 # "mock" configurations to build with, activate only as needed
-MOCKS+=fedora-32-x86_64
-MOCKS+=epel-8-x86_64
-MOCKS+=epel-7-x86_64
+MOCKS+=fedora-38-x86_64
+MOCKS+=centos-stream-9-x86_64
+MOCKS+=centos-stream-8-x86_64
+MOCKS+=centos+epel-7-x86_64
 # Modern rsync uses sytemd rather than SysV init
 #MOCKS+=epel-6-x86_64
 
@@ -72,8 +73,8 @@ install:: $(MOCKS)
 	    case $$repo in \
 		*-7-x86_64) yumrelease=el/7; yumarch=x86_64; ;; \
 		*-8-x86_64) yumrelease=el/8; yumarch=x86_64; ;; \
-		*-32-x86_64) yumrelease=fedora/32; yumarch=x86_64; ;; \
-		*-f32-x86_64) yumrelease=fedora/32; yumarch=x86_64; ;; \
+		*-38-x86_64) yumrelease=fedora/38; yumarch=x86_64; ;; \
+		*-f38-x86_64) yumrelease=fedora/38; yumarch=x86_64; ;; \
 		*-rawhide-x86_64) yumrelease=fedora/rawhide; yumarch=x86_64; ;; \
 		*) echo "Unrecognized release for $$repo, exiting" >&2; exit 1; ;; \
 	    esac; \
