@@ -3,15 +3,14 @@
 %define isprerelease 0
 
 %if %isprerelease
-%define prerelease pre1
+%define prerelease pre3
 %endif
 
 Summary: A program for synchronizing files over a network
 Name: rsync
-Version: 3.2.3
-Release: 0%{?dist}
-Group: Applications/Internet
-URL: http://rsync.samba.org/
+Version: 3.2.7
+Release: i0.22%{?prerelease}%{?dist}
+URL: https://rsync.samba.org/
 
 Source0: https://download.samba.org/pub/rsync/src/rsync-%{version}%{?prerelease}.tar.gz
 Source1: https://download.samba.org/pub/rsync/src/rsync-patches-%{version}%{?prerelease}.tar.gz
@@ -22,19 +21,22 @@ Source5: rsyncd.sysconfig
 Source6: rsyncd@.service
 
 BuildRequires: autoconf
+BuildRequires: gcc
 BuildRequires: gcc-c++
 BuildRequires: libacl-devel
 BuildRequires: libattr-devel
 BuildRequires: libzstd-devel
 BuildRequires: lz4-devel
+BuildRequires: make
 BuildRequires: openssl-devel
 BuildRequires: popt-devel
 BuildRequires: systemd
 BuildRequires: xxhash-devel
-#Requires: zlib
 #Added virtual provide for zlib due to https://fedoraproject.org/wiki/Bundled_Libraries?rd=Packaging:Bundled_Libraries
 Provides: bundled(zlib) = 1.2.8
 License: GPLv3+
+
+Patch1: rsync-3.2.2-runtests.patch
 
 %description
 Rsync uses a reliable algorithm to bring remote and host files into
@@ -65,22 +67,25 @@ package provides the anonymous rsync service.
 %setup -q -b 1
 %endif
 
-#Needed for compatibility with previous patched rsync versions
-#patch -p1 -i patches/acls.diff
-#patch -p1 -i patches/xattrs.diff
-
-#Enable --copy-devices parameter
-patch -p1 -i patches/copy-devices.diff
+#%patch0 -p1 -b .verify-hostname
+%patch -P 1 -p1 -b .runtests
 
 %build
+%configure \
+  --enable-openssl \
+  --enable-xxhash \
+  --enable-zstd \
+  --enable-lz4 \
+  --enable-ipv6
 
-%configure
-# --with-included-zlib=no temporary disabled because of #1043965
+%{make_build}
 
-make %{?_smp_mflags}
+%check
+make check
+chmod -x support/*
 
 %install
-%makeinstall INSTALLCMD='install -p' INSTALLMAN='install -p'
+%{make_install} INSTALLCMD='install -p' INSTALLMAN='install -p'
 
 install -D -m644 %{SOURCE3} $RPM_BUILD_ROOT/%{_unitdir}/rsyncd.service
 install -D -m644 %{SOURCE2} $RPM_BUILD_ROOT/%{_unitdir}/rsyncd.socket
@@ -88,23 +93,17 @@ install -D -m644 %{SOURCE4} $RPM_BUILD_ROOT/%{_sysconfdir}/rsyncd.conf
 install -D -m644 %{SOURCE5} $RPM_BUILD_ROOT/%{_sysconfdir}/sysconfig/rsyncd
 install -D -m644 %{SOURCE6} $RPM_BUILD_ROOT/%{_unitdir}/rsyncd@.service
 
-%check
-make check
-#scripts in support/* are needed to run upstream tests but after install these should not be executable
-chmod -x support/*
-
 %files
-%{!?_licensedir:%global license %%doc}
 %license COPYING
-%doc NEWS.md README.md TODO support/ tech_report.tex
+%doc support/ tech_report.tex
 %{_bindir}/%{name}
 %{_bindir}/%{name}-ssl
-%{_mandir}/man1/%{name}-ssl.1*
 %{_mandir}/man1/%{name}.1*
-
-%files daemon
+%{_mandir}/man1/%{name}-ssl.1*
 %{_mandir}/man5/rsyncd.conf.5*
 %config(noreplace) %{_sysconfdir}/rsyncd.conf
+
+%files daemon
 %config(noreplace) %{_sysconfdir}/sysconfig/rsyncd
 %{_unitdir}/rsyncd.socket
 %{_unitdir}/rsyncd.service
@@ -120,18 +119,122 @@ chmod -x support/*
 %systemd_postun_with_restart rsyncd.service
 
 %changelog
-* Tue Oct 29 2019 Michal Ruprich <mruprich@redhat.com> - 3.1.3-7
-- Resolves: #1693162 - remove-source-files fails with symlinks
+* Fri Jan 20 2023 Fedora Release Engineering <releng@fedoraproject.org> - 3.2.7-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_38_Mass_Rebuild
 
-* Tue Apr 16 2019 Michal Ruprich <mruprich@redhat.com> - 3.1.3-6
-- Resolves: #1602683 - Please review important issues found by covscan
+* Fri Oct 21 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.7-1
+- New version 3.2.7
 
-* Tue Apr 16 2019 Michal Ruprich <mruprich@redhat.com> - 3.1.3-5
-- Resolves: #1656761 - [FJ8.0 Bug]: [REG] The rsync command is terminated with SIGSEGV
+* Tue Sep 27 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.6-2
+- Resolves: #2128682 - rsync fail with "ERROR: rejecting unrequested file-list name..." depend of parameters order
 
-* Wed Oct 03 2018 Michal Ruprich <mruprich@redhat.com> - 3.1.3-4
-- Resolves: #1635631 - Remove --noatime option from rsync
-  Cleaning spec file
+* Mon Sep 12 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.6-1
+- New version 3.2.6
+
+* Tue Aug 16 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.5-1
+- New version 3.2.5
+- Resolves: #2115430 - remote arbitrary files write inside the directories of connecting peers
+- Fix for CVE-2022-37434
+
+* Sat Jul 23 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.2.4-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_37_Mass_Rebuild
+
+* Tue May 17 2022 Adam Williamson <awilliam@redhat.com> - 3.2.4-4
+- Bump revision to 4 to be higher than wrongly-versioned 3.2.4-3pre3
+
+* Tue May 17 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.4-1
+- New version 3.2.4
+
+* Thu Apr 14 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.4-3pre3
+- Fix for CVE-2018-25032
+
+* Mon Mar 21 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.4-2pre3
+- Removing part of patch that does not belong
+
+* Wed Mar 16 2022 Michal Ruprich <mruprich@redhat.com> - 3.2.4-1pre3
+- New pre-release version 3.2.4pre3
+
+* Fri Jan 21 2022 Fedora Release Engineering <releng@fedoraproject.org> - 3.2.3-14
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_36_Mass_Rebuild
+
+* Tue Nov 16 2021 Michal Ruprich <mruprich@redhat.com> - 3.2.3-13
+- Separating ci tests
+
+* Tue Nov 16 2021 Michal Ruprich <mruprich@redhat.com> - 3.2.3-12
+- Disabling STI tests
+
+* Mon Nov 15 2021 Michal Ruprich <mruprich@redhat.com> - 3.2.3-11
+- Bumping version to test fixed gating file
+
+* Fri Nov  5 2021 Jan Kratochvil <jan@jankratochvil.net> - 3.2.3-10
+- Re-enable xxh128 xxh3 xxh64 disabled during 3.2.2 update.
+- Enforce openssl xxhash zstd lz4 ipv6 features by --enable-*. 
+
+* Tue Sep 14 2021 Sahana Prasad <sahana@redhat.com> - 3.2.3-9
+- Rebuilt with OpenSSL 3.0.0
+
+* Fri Jul 23 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.2.3-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_35_Mass_Rebuild
+
+* Sun May 09 2021 Jeff Law <jlaw@tachyum.com> - 3.2.3-7
+- Re-enable LTO.
+
+* Tue Mar 02 2021 Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl> - 3.2.3-6
+- Rebuilt for updated systemd-rpm-macros
+  See https://pagure.io/fesco/issue/2583.
+
+* Wed Jan 27 2021 Fedora Release Engineering <releng@fedoraproject.org> - 3.2.3-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_34_Mass_Rebuild
+
+* Tue Dec 08 2020 Michal Ruprich <mruprich@redhat.com> - 3.2.3-4
+- Resolves: #1894485 - rsync is unable to set permissions when chrooted
+- Getting rid of deprecated makeinstall macro
+
+* Fri Nov 20 2020 Michal Ruprich <mruprich@redhat.com> - 3.2.3-3
+- Disabling LTO as a temporary measure for rhbz#1898912
+
+* Thu Nov 19 2020 Michal Ruprich <mruprich@redhat.com> - 3.2.3-2
+- Use make macros
+- https://fedoraproject.org/wiki/Changes/UseMakeBuildInstallMacro
+
+* Mon Aug 31 2020 Michal Ruprich <mruprich@redhat.com> - 3.2.3-1
+- New version 3.2.3
+- Removed upstream patches acls.diff and xattrs.diff
+
+* Sat Aug 01 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.2.2-3
+- Second attempt - Rebuilt for
+  https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Wed Jul 29 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.2.2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_33_Mass_Rebuild
+
+* Tue Jul 21 2020 Michal Ruprich <michalruprich@gmail.com> - 3.2.2-1
+- New version 3.2.2
+
+* Thu Jan 30 2020 Fedora Release Engineering <releng@fedoraproject.org> - 3.1.3-11
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
+* Thu Oct 10 2019 Michal Ruprich <mruprich@redhat.com> - 3.1.3-10
+- Enabling upstream test suite during build rhbz#1533846
+
+* Fri Jul 26 2019 Fedora Release Engineering <releng@fedoraproject.org> - 3.1.3-9
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
+
+* Mon Apr 15 2019 Michal Ruprich <mruprich@redhat.com> - 3.1.3-8
+- Resolves: #1452187 - move man page rsyncd.conf(5) from rsync-daemon to rsync package
+- Moving the config file as well
+
+* Tue Mar 19 2019 Michal Ruprich <mruprich@redhat.com> - 3.1.3-7
+- Resolves: #1683737 - [abrt] rsync: utf8_internal_loop(): rsync killed by SIGSEGV
+
+* Sat Feb 02 2019 Fedora Release Engineering <releng@fedoraproject.org> - 3.1.3-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_30_Mass_Rebuild
+
+* Wed Jan 02 2019 Michal Ruprich <mruprich@redhat.com> - 3.1.3-5
+- Fix for rhbz#1586346 - rsyncd.service fails to start at boot if address is configured
+
+* Sat Jul 14 2018 Fedora Release Engineering <releng@fedoraproject.org> - 3.1.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
 
 * Fri Feb 09 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 3.1.3-3
 - Escape macros in %%changelog
