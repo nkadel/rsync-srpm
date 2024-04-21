@@ -8,7 +8,7 @@
 
 Summary: A program for synchronizing files over a network
 Name: rsync
-Version: 3.2.7
+Version: 3.3.0
 Release: i0.22%{?prerelease}%{?dist}
 URL: https://rsync.samba.org/
 
