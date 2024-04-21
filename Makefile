@@ -11,7 +11,7 @@ RSYNCOPTS=-a --no-owner --no-group
 RSYNCSAFEOPTS=$(RSYNCOPTS) --ignore-existing 
 
 # "mock" configurations to build with, activate only as needed
-MOCKS+=fedora-38-x86_64
+MOCKS+=fedora-40-x86_64
 MOCKS+=centos-stream-9-x86_64
 MOCKS+=centos-stream-8-x86_64
 MOCKS+=centos+epel-7-x86_64
@@ -61,8 +61,8 @@ $(MOCKS):: src.rpm
 		echo "Actally building $? in $@"; \
 		rm -rf $@; \
 		mock -q -r /etc/mock/$@.cfg \
-		     --resultdir=$(PWD)/$@ \
-		     $?; \
+		    --sources $(PWD) --spec $(SPEC) \
+		    --resultdir=$(PWD)/$@; \
 	fi
 
 mock:: $(MOCKS)
@@ -73,8 +73,8 @@ install:: $(MOCKS)
 	    case $$repo in \
 		*-7-x86_64) yumrelease=el/7; yumarch=x86_64; ;; \
 		*-8-x86_64) yumrelease=el/8; yumarch=x86_64; ;; \
-		*-38-x86_64) yumrelease=fedora/38; yumarch=x86_64; ;; \
-		*-f38-x86_64) yumrelease=fedora/38; yumarch=x86_64; ;; \
+		*-40-x86_64) yumrelease=fedora/40; yumarch=x86_64; ;; \
+		*-f40-x86_64) yumrelease=fedora/40; yumarch=x86_64; ;; \
 		*-rawhide-x86_64) yumrelease=fedora/rawhide; yumarch=x86_64; ;; \
 		*) echo "Unrecognized release for $$repo, exiting" >&2; exit 1; ;; \
 	    esac; \
